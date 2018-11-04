@@ -5,6 +5,7 @@
 #define H 600
 #define MAX_ASTEROIDS 16
 #define PLAYER_SIZE 20.f
+#define PLAYER_SPEED 40.f
 #define PLAYER_ROT_SPEED fPI
 
 struct asteroid
@@ -16,8 +17,15 @@ struct asteroid
 
 struct player
 {
+	enum
+	{
+		PLAYER_FREE,
+		PLAYER_FLYING,
+		PLAYER_LANDED,
+	} state;
 	v2f pos;
 	v2f dir;
+	v2f vel;
 };
 
 static
@@ -48,6 +56,15 @@ void generate_asteroid(struct asteroid *a)
 		a->vel = v2f_scale(g_v2f_down, speed);
 	break;
 	}
+}
+
+static
+void update_player_rotation(gui_t *gui, struct player *player, r32 dt)
+{
+	if (key_down(gui, KB_A))
+		player->dir = v2f_rot(player->dir, PLAYER_ROT_SPEED*dt);
+	else if (key_down(gui, KB_D))
+		player->dir = v2f_rot(player->dir, -PLAYER_ROT_SPEED*dt);
 }
 
 static
@@ -108,10 +125,21 @@ int main(int argc, char *const argv[])
 			}
 		}
 
-		if (key_down(gui, KB_A))
-			player.dir = v2f_rot(player.dir, PLAYER_ROT_SPEED*dt);
-		else if (key_down(gui, KB_D))
-			player.dir = v2f_rot(player.dir, -PLAYER_ROT_SPEED*dt);
+		switch (player.state) {
+		case PLAYER_FREE:
+			update_player_rotation(gui, &player, dt);
+			if (key_down(gui, KB_SPACE)) {
+				player.vel = v2f_scale(player.dir, PLAYER_SPEED);
+				player.state = PLAYER_FLYING;
+			}
+		break;
+		case PLAYER_FLYING:
+			update_player_rotation(gui, &player, dt);
+			player.pos = v2f_fmadd(player.pos, player.vel, dt);
+		break;
+		case PLAYER_LANDED:
+		break;
+		}
 		render_player(gui, &player);
 
 		if (key_down(gui, KB_Q))
