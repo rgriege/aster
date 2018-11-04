@@ -26,6 +26,7 @@ struct player
 	v2f pos;
 	v2f dir;
 	v2f vel;
+	const struct asteroid *base;
 };
 
 static
@@ -65,6 +66,13 @@ void update_player_rotation(gui_t *gui, struct player *player, r32 dt)
 		player->dir = v2f_rot(player->dir, PLAYER_ROT_SPEED*dt);
 	else if (key_down(gui, KB_D))
 		player->dir = v2f_rot(player->dir, -PLAYER_ROT_SPEED*dt);
+}
+
+static
+void update_player_position_on_asteroid(gui_t *gui, struct player *player)
+{
+	const struct asteroid *a = player->base;
+	player->pos = v2f_fmadd(a->pos, player->dir, a->r);
 }
 
 static
@@ -136,8 +144,25 @@ int main(int argc, char *const argv[])
 		case PLAYER_FLYING:
 			update_player_rotation(gui, &player, dt);
 			player.pos = v2f_fmadd(player.pos, player.vel, dt);
+			for (u32 i = 0; i < MAX_ASTEROIDS; ++i) {
+				struct asteroid *a = &asteroids[i];
+				if (a->r > 0 && v2f_dist(player.pos, a->pos) < a->r) {
+					player.state = PLAYER_LANDED;
+					player.vel = g_v2f_zero;
+					player.base = a;
+					player.dir = v2f_dir(a->pos, player.pos);
+					update_player_position_on_asteroid(gui, &player);
+				}
+			}
 		break;
 		case PLAYER_LANDED:
+			update_player_rotation(gui, &player, dt);
+			update_player_position_on_asteroid(gui, &player);
+			if (key_down(gui, KB_SPACE)) {
+				player.vel = v2f_scale(player.dir, PLAYER_SPEED);
+				player.state = PLAYER_FLYING;
+				player.base = NULL;
+			}
 		break;
 		}
 		render_player(gui, &player);
