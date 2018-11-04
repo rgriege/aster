@@ -30,6 +30,16 @@ struct player
 };
 
 static
+void reset_player(struct player *player)
+{
+	player->state = PLAYER_FREE;
+	player->pos.x = W/2;
+	player->pos.y = H/2;
+	player->dir   = g_v2f_up;
+	player->vel   = g_v2f_zero;
+	player->base  = NULL;
+}
+static
 void generate_asteroid(struct asteroid *a)
 {
 	const r32 speed = 20.f + rand() % 10;
@@ -57,6 +67,15 @@ void generate_asteroid(struct asteroid *a)
 		a->vel = v2f_scale(g_v2f_down, speed);
 	break;
 	}
+}
+
+static
+b32 entity_off_screen(v2f pos, r32 r)
+{
+	return pos.x + 1.f < -r
+	    || pos.x - r - 1.f > W
+	    || pos.y + 1.f < -r
+	    || pos.y - r - 1.f > H;
 }
 
 static
@@ -93,13 +112,14 @@ int main(int argc, char *const argv[])
 	b32 quit = false;
 	struct asteroid asteroids[MAX_ASTEROIDS] = {0};
 	u32 asteroid_timer = 0;
-	struct player player = { .pos = { .x=W/2, .y=H/2 }, .dir = g_v2f_up };
+	struct player player = {0};
 
 	gui = gui_create(0, 0, W, H, "aster", WINDOW_CENTERED);
 	if (!gui)
 		return 1;
 
 	srand(time(NULL));
+	reset_player(&player);
 
 	while (!quit && gui_begin_frame(gui)) {
 		const u32 milli = gui_frame_time_milli(gui);
@@ -125,10 +145,7 @@ int main(int argc, char *const argv[])
 			if (a->r > 0) {
 				a->pos = v2f_fmadd(a->pos, a->vel, dt);
 				gui_circ(gui, a->pos.x, a->pos.y, a->r, g_nocolor, g_white);
-				if (   a->pos.x + 1.f < -a->r
-				    || a->pos.x - a->r - 1.f > W
-				    || a->pos.y + 1.f < -a->r
-				    || a->pos.y - a->r - 1.f > H)
+				if (entity_off_screen(a->pos, a->r))
 					a->r = 0;
 			}
 		}
@@ -165,6 +182,13 @@ int main(int argc, char *const argv[])
 			}
 		break;
 		}
+		if (entity_off_screen(player.pos, 0)) {
+			for (u32 i = 0; i < MAX_ASTEROIDS; ++i)
+				asteroids[i].r = 0;
+			asteroid_timer = 0;
+			reset_player(&player);
+		}
+
 		render_player(gui, &player);
 
 		if (key_down(gui, KB_Q))
