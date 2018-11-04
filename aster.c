@@ -5,7 +5,7 @@
 #define H 600
 #define MAX_ASTEROIDS 16
 #define PLAYER_SIZE 20.f
-#define PLAYER_SPEED 40.f
+#define PLAYER_SPEED 80.f
 #define PLAYER_ROT_SPEED fPI
 
 struct asteroid
