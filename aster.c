@@ -164,8 +164,9 @@ int main(int argc, char *const argv[])
 
 void frame(void)
 {
-#endif
+#else
 	while (!quit && gui_begin_frame(gui)) {
+#endif
 		const u32 milli = gui_frame_time_milli(gui);
 		const r32 dt = (r32)milli / 1000.f;
 
@@ -241,10 +242,8 @@ void frame(void)
 		gui_end_frame(gui);
 #else
 		gui_end_frame_ex(gui, 16, 1000, 30000);
-#endif
 	}
 
-#ifndef __EMSCRIPTEN__
 	return 0;
 #endif
 }
