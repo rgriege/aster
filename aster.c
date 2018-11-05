@@ -237,7 +237,9 @@ void frame(void)
 		if (key_down(gui, KB_Q))
 			quit = true;
 
-#ifndef __EMSCRIPTEN__
+#ifdef __EMSCRIPTEN__
+		gui_end_frame(gui);
+#else
 		gui_end_frame_ex(gui, 16, 1000, 30000);
 #endif
 	}
