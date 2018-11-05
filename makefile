@@ -10,6 +10,11 @@ LFLAGS = -lGL -lGLEW -lm -lSDL2 -ldl
 aster: aster.c
 	$(CC) $(CCFLAGS) -o aster aster.c $(LFLAGS)
 
+index.html: aster.c template.html
+	emcc -std=gnu99 -Wno-typedef-redefinition aster.c -O2 -I. -I$(INC)/SDL2/ -DFMATH_NO_SSE -DDMATH_NO_SSE -s WASM=1 --shell-file template.html -o aster.html -s USE_SDL=2
+	mv aster.html index.html
+
 .PHONY: clean
 clean:
 	rm -f aster log.txt
+	rm -f index.html aster.html aster.wasm aster.js

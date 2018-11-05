@@ -1,3 +1,7 @@
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#endif
+
 #define VIOLET_IMPLEMENTATION
 #include "violet/all.h"
 
@@ -131,14 +135,21 @@ void render_player(gui_t *gui, const struct player *player)
 	gui_polyf(gui, B2PC(tri), g_red, g_white);
 }
 
+#ifndef __EMSCRIPTEN__
 int main(int argc, char *const argv[])
 {
+#endif
 	gui_t *gui;
 	b32 quit = false;
 	struct asteroid asteroids[MAX_ASTEROIDS] = {0};
 	u32 asteroid_timer = 0;
 	struct player player = {0};
 
+#ifdef __EMSCRIPTEN__
+void frame(void);
+int main(int argc, char *const argv[])
+{
+#endif
 	gui = gui_create(0, 0, W, H, "aster", WINDOW_CENTERED);
 	if (!gui)
 		return 1;
@@ -146,6 +157,14 @@ int main(int argc, char *const argv[])
 	srand(time(NULL));
 	reset_player(&player);
 
+#ifdef __EMSCRIPTEN__
+	emscripten_set_main_loop(frame, 0, 0);
+	return 0;
+}
+
+void frame(void)
+{
+#endif
 	while (!quit && gui_begin_frame(gui)) {
 		const u32 milli = gui_frame_time_milli(gui);
 		const r32 dt = (r32)milli / 1000.f;
@@ -221,5 +240,7 @@ int main(int argc, char *const argv[])
 		gui_end_frame_ex(gui, 16, 1000, 30000);
 	}
 
+#ifndef __EMSCRIPTEN__
 	return 0;
+#endif
 }
