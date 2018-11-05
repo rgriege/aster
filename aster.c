@@ -164,6 +164,7 @@ int main(int argc, char *const argv[])
 
 void frame(void)
 {
+	gui_begin_frame(gui);
 #else
 	while (!quit && gui_begin_frame(gui)) {
 #endif
